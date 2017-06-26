@@ -19,4 +19,5 @@
 
     PHP_FUNCTION(collect);
     PHP_METHOD(Collection, __construct);
+    PHP_METHOD(Collection, sum);
 #endif
