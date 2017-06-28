@@ -34,6 +34,7 @@ PHP_MINIT_FUNCTION(collection) {
         PHP_ME(Collection, __construct, arginfo_construct, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
         PHP_ME(Collection, sum, NULL, ZEND_ACC_PUBLIC)
         PHP_ME(Collection, avg, NULL, ZEND_ACC_PUBLIC)
+        PHP_ME(Collection, count, NULL, ZEND_ACC_PUBLIC)
         PHP_FE_END
     };
 
@@ -77,6 +78,10 @@ zval php_collection_sum(zval *array) {
     return result;
 }
 
+zend_long php_collection_count(zval *array) {
+    return zend_array_count(Z_ARRVAL_P(array));
+}
+
 // Your functions here...
 /* PHP_FUNCTION(collect) { */
 /*     RETURN_STRING("Hello Sasaya"); */
@@ -110,7 +115,6 @@ METHOD(sum) {
 
 METHOD(avg) {
     zval *items, sum;
-    zend_long count;
 
     if (zend_parse_parameters_none() == FAILURE) {
         return;
@@ -120,7 +124,17 @@ METHOD(avg) {
 
     ZVAL_DOUBLE(&sum, Z_DVAL(php_collection_sum(items)));
 
-    count = zend_array_count(Z_ARRVAL_P(items));
+    RETVAL_DOUBLE(Z_DVAL(sum) / php_collection_count(items));
+}
 
-    RETVAL_DOUBLE(Z_DVAL(sum) / count);
+METHOD(count) {
+    zval *items;
+
+    if (zend_parse_parameters_none() == FAILURE) {
+        return;
+    }
+
+    GET_PROP(items, "items");
+
+    RETVAL_LONG(php_collection_count(items));
 }
