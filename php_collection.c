@@ -66,7 +66,7 @@ PHP_MINFO_FUNCTION(collection) {
 zval php_collection_sum(zval *array) {
     zval *entry, entry_n, result;
 
-    ZVAL_LONG(&result, 0);
+    ZVAL_DOUBLE(&result, 0);
 
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(array), entry) {
         ZVAL_COPY(&entry_n, entry);
@@ -105,7 +105,7 @@ METHOD(sum) {
 
     GET_PROP(items, "items");
 
-    RETVAL_LONG(Z_LVAL(php_collection_sum(items)));
+    RETVAL_DOUBLE(Z_DVAL(php_collection_sum(items)));
 }
 
 METHOD(avg) {
@@ -118,9 +118,9 @@ METHOD(avg) {
 
     GET_PROP(items, "items");
 
-    ZVAL_LONG(&sum, Z_LVAL(php_collection_sum(items)));
+    ZVAL_DOUBLE(&sum, Z_DVAL(php_collection_sum(items)));
 
     count = zend_array_count(Z_ARRVAL_P(items));
 
-    RETVAL_DOUBLE(Z_LVAL(sum) / count);
+    RETVAL_DOUBLE(Z_DVAL(sum) / count);
 }
