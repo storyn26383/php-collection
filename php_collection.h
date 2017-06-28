@@ -20,4 +20,5 @@
     PHP_FUNCTION(collect);
     PHP_METHOD(Collection, __construct);
     PHP_METHOD(Collection, sum);
+    PHP_METHOD(Collection, avg);
 #endif

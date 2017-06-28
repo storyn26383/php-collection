@@ -33,6 +33,7 @@ PHP_MINIT_FUNCTION(collection) {
     zend_function_entry methods[] = {
         PHP_ME(Collection, __construct, arginfo_construct, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
         PHP_ME(Collection, sum, NULL, ZEND_ACC_PUBLIC)
+        PHP_ME(Collection, avg, NULL, ZEND_ACC_PUBLIC)
         PHP_FE_END
     };
 
@@ -55,6 +56,20 @@ PHP_MINFO_FUNCTION(collection) {
     //
 }
 
+zval php_collection_sum(zval *array) {
+    zval *entry, entry_n, result;
+
+    ZVAL_LONG(&result, 0);
+
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(array), entry) {
+        ZVAL_COPY(&entry_n, entry);
+        convert_scalar_to_number(&entry_n);
+        fast_add_function(&result, &result, &entry_n);
+    } ZEND_HASH_FOREACH_END();
+
+    return result;
+}
+
 // Your functions here...
 /* PHP_FUNCTION(collect) { */
 /*     RETURN_STRING("Hello Sasaya"); */
@@ -68,26 +83,37 @@ PHP_METHOD(Collection, __construct) {
     }
 
     if (Z_TYPE_P(items) != IS_ARRAY) {
-        array_init(items);
+        ZVAL_NEW_ARR(items);
     }
 
     zend_update_property(collection_class_entry, getThis(), "items", sizeof("items") - 1, items);
 }
 
 PHP_METHOD(Collection, sum) {
-    zval *rv, *items, *entry, entry_n;
+    zval *rv, *items;
 
     if (zend_parse_parameters_none() == FAILURE) {
         return;
     }
 
-    ZVAL_LONG(return_value, 0);
+    items = zend_read_property(collection_class_entry, getThis(), "items", sizeof("items") - 1, 1, rv);
+
+    RETVAL_LONG(Z_LVAL(php_collection_sum(items)));
+}
+
+PHP_METHOD(Collection, avg) {
+    zval *rv, *items, sum;
+    zend_long count;
+
+    if (zend_parse_parameters_none() == FAILURE) {
+        return;
+    }
 
     items = zend_read_property(collection_class_entry, getThis(), "items", sizeof("items") - 1, 1, rv);
 
-    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(items), entry) {
-        ZVAL_COPY(&entry_n, entry);
-        convert_scalar_to_number(&entry_n);
-        fast_add_function(return_value, return_value, &entry_n);
-    } ZEND_HASH_FOREACH_END();
+    ZVAL_LONG(&sum, Z_LVAL(php_collection_sum(items)));
+
+    count = zend_array_count(Z_ARRVAL_P(items));
+
+    RETVAL_DOUBLE(Z_LVAL(sum) / count);
 }
