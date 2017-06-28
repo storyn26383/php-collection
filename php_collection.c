@@ -56,6 +56,13 @@ PHP_MINFO_FUNCTION(collection) {
     //
 }
 
+#define METHOD(name) PHP_METHOD(Collection, name)
+
+#define GET_PROP(value, key) do { \
+    zval *rv; \
+    value = zend_read_property(collection_class_entry, getThis(), key, sizeof(key) - 1, 1, rv); \
+} while (0)
+
 zval php_collection_sum(zval *array) {
     zval *entry, entry_n, result;
 
@@ -75,7 +82,7 @@ zval php_collection_sum(zval *array) {
 /*     RETURN_STRING("Hello Sasaya"); */
 /* } */
 
-PHP_METHOD(Collection, __construct) {
+METHOD(__construct) {
     zval *items;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "|a", &items) == FAILURE) {
@@ -89,27 +96,27 @@ PHP_METHOD(Collection, __construct) {
     zend_update_property(collection_class_entry, getThis(), "items", sizeof("items") - 1, items);
 }
 
-PHP_METHOD(Collection, sum) {
-    zval *rv, *items;
+METHOD(sum) {
+    zval *items;
 
     if (zend_parse_parameters_none() == FAILURE) {
         return;
     }
 
-    items = zend_read_property(collection_class_entry, getThis(), "items", sizeof("items") - 1, 1, rv);
+    GET_PROP(items, "items");
 
     RETVAL_LONG(Z_LVAL(php_collection_sum(items)));
 }
 
-PHP_METHOD(Collection, avg) {
-    zval *rv, *items, sum;
+METHOD(avg) {
+    zval *items, sum;
     zend_long count;
 
     if (zend_parse_parameters_none() == FAILURE) {
         return;
     }
 
-    items = zend_read_property(collection_class_entry, getThis(), "items", sizeof("items") - 1, 1, rv);
+    GET_PROP(items, "items");
 
     ZVAL_LONG(&sum, Z_LVAL(php_collection_sum(items)));
 
