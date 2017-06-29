@@ -5,7 +5,7 @@
 #endif
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_construct, 0, 0, 0)
-    ZEND_ARG_INFO(0, items)
+    ZEND_ARG_ARRAY_INFO(0, items, 1)
 ZEND_END_ARG_INFO()
 
 const zend_function_entry collection_functions[] = {
