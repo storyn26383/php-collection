@@ -8,6 +8,10 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_construct, 0, 0, 0)
     ZEND_ARG_ARRAY_INFO(0, items, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_map, 0, 0, 1)
+    ZEND_ARG_CALLABLE_INFO(0, callback, 0)
+ZEND_END_ARG_INFO()
+
 const zend_function_entry collection_functions[] = {
     /* PHP_FE(collect, NULL) */
     PHP_FE_END
@@ -35,6 +39,7 @@ PHP_MINIT_FUNCTION(collection) {
         PHP_ME(Collection, sum, NULL, ZEND_ACC_PUBLIC)
         PHP_ME(Collection, avg, NULL, ZEND_ACC_PUBLIC)
         PHP_ME(Collection, count, NULL, ZEND_ACC_PUBLIC)
+        PHP_ME(Collection, map, arginfo_map, ZEND_ACC_PUBLIC)
         PHP_FE_END
     };
 
@@ -137,4 +142,42 @@ METHOD(count) {
     GET_PROP(items, "items");
 
     RETVAL_LONG(php_collection_count(items));
+}
+
+METHOD(map) {
+    zval *items, *value, result, arg;
+	zend_fcall_info callback;
+	zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
+    zend_ulong num_key;
+    zend_string *str_key;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_FUNC(callback, callback_cache)
+    ZEND_PARSE_PARAMETERS_END();
+
+    GET_PROP(items, "items");
+
+    array_init_size(return_value, php_collection_count(items));
+
+    ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(items), num_key, str_key, value) {
+        callback.retval = &result;
+        callback.param_count = 1;
+        callback.params = &arg;
+        callback.no_separation = 0;
+
+        ZVAL_COPY(&arg, value);
+
+        i_zval_ptr_dtor(&arg);
+
+        if (zend_call_function(&callback, &callback_cache) != SUCCESS || Z_TYPE(result) == IS_UNDEF) {
+            zend_array_destroy(Z_ARR_P(return_value));
+            RETURN_NULL();
+        }
+
+        if (str_key) {
+            zend_hash_add_new(Z_ARRVAL_P(return_value), str_key, &result);
+        } else {
+            zend_hash_index_add_new(Z_ARRVAL_P(return_value), num_key, &result);
+        }
+    } ZEND_HASH_FOREACH_END();
 }
