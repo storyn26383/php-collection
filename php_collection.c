@@ -95,8 +95,16 @@ zend_long php_collection_count(zval *array) {
 METHOD(__construct) {
     zval *items;
 
+    // TODO: not working, why?
+    /* ZEND_PARSE_PARAMETERS_START(0, 1) */
+    /*     Z_PARAM_OPTIONAL */
+    /*     Z_PARAM_ARRAY(items) */
+    /* ZEND_PARSE_PARAMETERS_END(); */
+
+    /* RETVAL_NULL(); */
+
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "|a", &items) == FAILURE) {
-        RETURN_NULL();
+        RETVAL_NULL();
     }
 
     if (Z_TYPE_P(items) != IS_ARRAY) {
