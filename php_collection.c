@@ -181,7 +181,7 @@ METHOD(map) {
     ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(items), num_key, str_key, value) {
         ZVAL_COPY(&arg, value);
 
-        i_zval_ptr_dtor(&arg);
+        zval_ptr_dtor(&arg);
 
         if (zend_call_function(&callback, &callback_cache) != SUCCESS || Z_TYPE(result) == IS_UNDEF) {
             zend_array_destroy(Z_ARR_P(return_value));
@@ -201,7 +201,7 @@ METHOD(reduce) {
 	zval args[2];
 	zend_fcall_info callback;
 	zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
-    int failure;
+    int success;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
         Z_PARAM_FUNC(callback, callback_cache)
@@ -219,12 +219,12 @@ METHOD(reduce) {
 		ZVAL_COPY(&args[1], entry);
 		callback.params = args;
 
-        failure = zend_call_function(&callback, &callback_cache) == SUCCESS && Z_TYPE(retval) != IS_UNDEF;
+        success = zend_call_function(&callback, &callback_cache) == SUCCESS && Z_TYPE(retval) != IS_UNDEF;
 
         zval_ptr_dtor(&args[1]);
         zval_ptr_dtor(&args[0]);
 
-		if (!failure) {
+		if (!success) {
             return;
         }
 
