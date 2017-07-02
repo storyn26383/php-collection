@@ -173,12 +173,12 @@ METHOD(map) {
 
     array_init_size(return_value, php_collection_count(items));
 
-    ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(items), num_key, str_key, value) {
-        callback.retval = &result;
-        callback.param_count = 1;
-        callback.params = &arg;
-        callback.no_separation = 0;
+    callback.retval = &result;
+    callback.param_count = 1;
+    callback.params = &arg;
+    callback.no_separation = 0;
 
+    ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(items), num_key, str_key, value) {
         ZVAL_COPY(&arg, value);
 
         i_zval_ptr_dtor(&arg);
