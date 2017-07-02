@@ -165,8 +165,8 @@ METHOD(count) {
 
 METHOD(map) {
     zval *items, *value, result, arg;
-	zend_fcall_info callback;
-	zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
+    zend_fcall_info callback;
+    zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
     zend_ulong num_key;
     zend_string *str_key;
 
@@ -203,9 +203,9 @@ METHOD(map) {
 
 METHOD(reduce) {
     zval *items, *default_value, *value, retval, *entry, result;
-	zval args[2];
-	zend_fcall_info callback;
-	zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
+    zval args[2];
+    zend_fcall_info callback;
+    zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
     int success;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
@@ -215,35 +215,35 @@ METHOD(reduce) {
 
     GET_PROP(items, "items");
 
-	callback.retval = &retval;
-	callback.param_count = 2;
-	callback.no_separation = 0;
+    callback.retval = &retval;
+    callback.param_count = 2;
+    callback.no_separation = 0;
 
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(items), entry) {
-		ZVAL_COPY(&args[0], &result);
-		ZVAL_COPY(&args[1], entry);
-		callback.params = args;
+        ZVAL_COPY(&args[0], &result);
+        ZVAL_COPY(&args[1], entry);
+        callback.params = args;
 
         success = zend_call_function(&callback, &callback_cache) == SUCCESS && Z_TYPE(retval) != IS_UNDEF;
 
         zval_ptr_dtor(&args[1]);
         zval_ptr_dtor(&args[0]);
 
-		if (!success) {
+        if (!success) {
             return;
         }
 
         zval_ptr_dtor(&result);
         ZVAL_COPY_VALUE(&result, &retval);
-	} ZEND_HASH_FOREACH_END();
+    } ZEND_HASH_FOREACH_END();
 
-	RETVAL_ZVAL(&result, 1, 1);
+    RETVAL_ZVAL(&result, 1, 1);
 }
 
 METHOD(filter) {
     zval *items, *value, result, entry;
-	zend_fcall_info callback;
-	zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
+    zend_fcall_info callback;
+    zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
     zend_ulong num_key;
     zend_string *str_key;
     int success;
@@ -254,7 +254,7 @@ METHOD(filter) {
 
     GET_PROP(items, "items");
 
-	array_init(return_value);
+    array_init(return_value);
 
     callback.retval = &result;
     callback.param_count = 1;
