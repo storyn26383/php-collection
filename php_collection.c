@@ -80,6 +80,21 @@ PHP_MINFO_FUNCTION(collection) {
     value = zend_read_property(collection_class_entry, getThis(), key, sizeof(key) - 1, 1, rv); \
 } while (0)
 
+#define INIT_CALLBACK(callback, args, arg_count, return_value) do { \
+    callback.params = args; \
+    callback.param_count = arg_count; \
+    callback.retval = return_value; \
+    callback.no_separation = 0; \
+} while (0)
+
+#define UPDATE_HASH(array, str_key, num_key, value) do { \
+    if (str_key) { \
+        zend_hash_update(array, str_key, value); \
+    } else { \
+        zend_hash_index_update(array, num_key, value); \
+    } \
+} while (0)
+
 zval php_collection_sum(zval *array) {
     zval *entry, entry_n, result;
 
@@ -176,12 +191,9 @@ METHOD(map) {
 
     GET_PROP(items, "items");
 
-    array_init_size(return_value, php_collection_count(items));
+    array_init(return_value);
 
-    callback.retval = &result;
-    callback.param_count = 1;
-    callback.params = &arg;
-    callback.no_separation = 0;
+    INIT_CALLBACK(callback, &arg, 1, &result);
 
     ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(items), num_key, str_key, value) {
         ZVAL_COPY(&arg, value);
@@ -193,11 +205,7 @@ METHOD(map) {
             RETURN_NULL();
         }
 
-        if (str_key) {
-            zend_hash_add_new(Z_ARRVAL_P(return_value), str_key, &result);
-        } else {
-            zend_hash_index_add_new(Z_ARRVAL_P(return_value), num_key, &result);
-        }
+        UPDATE_HASH(Z_ARRVAL_P(return_value), str_key, num_key,  &result);
     } ZEND_HASH_FOREACH_END();
 }
 
@@ -215,14 +223,11 @@ METHOD(reduce) {
 
     GET_PROP(items, "items");
 
-    callback.retval = &retval;
-    callback.param_count = 2;
-    callback.no_separation = 0;
+    INIT_CALLBACK(callback, args, 2, &retval);
 
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(items), entry) {
         ZVAL_COPY(&args[0], &result);
         ZVAL_COPY(&args[1], entry);
-        callback.params = args;
 
         success = zend_call_function(&callback, &callback_cache) == SUCCESS && Z_TYPE(retval) != IS_UNDEF;
 
@@ -256,10 +261,7 @@ METHOD(filter) {
 
     array_init(return_value);
 
-    callback.retval = &result;
-    callback.param_count = 1;
-    callback.params = &entry;
-    callback.no_separation = 0;
+    INIT_CALLBACK(callback, &entry, 1, &result);
 
     ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(items), num_key, str_key, value) {
         ZVAL_COPY(&entry, value);
@@ -269,11 +271,7 @@ METHOD(filter) {
         success = zend_call_function(&callback, &callback_cache) == SUCCESS;
 
         if (success && !Z_ISUNDEF(result) && zend_is_true(&result)) {
-            if (str_key) {
-                zend_hash_update(Z_ARRVAL_P(return_value), str_key, &entry);
-            } else {
-                zend_hash_index_update(Z_ARRVAL_P(return_value), num_key, &entry);
-            }
+            UPDATE_HASH(Z_ARRVAL_P(return_value), str_key, num_key,  &entry);
         }
 
         zval_ptr_dtor(&result);
