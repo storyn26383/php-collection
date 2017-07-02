@@ -12,6 +12,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_map, 0, 0, 1)
     ZEND_ARG_CALLABLE_INFO(0, callback, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_reduce, 0, 0, 2)
+    ZEND_ARG_CALLABLE_INFO(0, callback, 0)
+    ZEND_ARG_INFO(0, default_value)
+ZEND_END_ARG_INFO()
+
 const zend_function_entry collection_functions[] = {
     /* PHP_FE(collect, NULL) */
     PHP_FE_END
@@ -40,6 +45,7 @@ PHP_MINIT_FUNCTION(collection) {
         PHP_ME(Collection, avg, NULL, ZEND_ACC_PUBLIC)
         PHP_ME(Collection, count, NULL, ZEND_ACC_PUBLIC)
         PHP_ME(Collection, map, arginfo_map, ZEND_ACC_PUBLIC)
+        PHP_ME(Collection, reduce, arginfo_reduce, ZEND_ACC_PUBLIC)
         PHP_FE_END
     };
 
@@ -188,4 +194,43 @@ METHOD(map) {
             zend_hash_index_add_new(Z_ARRVAL_P(return_value), num_key, &result);
         }
     } ZEND_HASH_FOREACH_END();
+}
+
+METHOD(reduce) {
+    zval *items, *default_value, *value, retval, *entry, result;
+	zval args[2];
+	zend_fcall_info callback;
+	zend_fcall_info_cache callback_cache = empty_fcall_info_cache;
+    int failure;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_FUNC(callback, callback_cache)
+        Z_PARAM_ZVAL(default_value)
+    ZEND_PARSE_PARAMETERS_END();
+
+    GET_PROP(items, "items");
+
+	callback.retval = &retval;
+	callback.param_count = 2;
+	callback.no_separation = 0;
+
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(items), entry) {
+		ZVAL_COPY(&args[0], &result);
+		ZVAL_COPY(&args[1], entry);
+		callback.params = args;
+
+        failure = zend_call_function(&callback, &callback_cache) == SUCCESS && Z_TYPE(retval) != IS_UNDEF;
+
+        zval_ptr_dtor(&args[1]);
+        zval_ptr_dtor(&args[0]);
+
+		if (!failure) {
+            return;
+        }
+
+        zval_ptr_dtor(&result);
+        ZVAL_COPY_VALUE(&result, &retval);
+	} ZEND_HASH_FOREACH_END();
+
+	RETVAL_ZVAL(&result, 1, 1);
 }

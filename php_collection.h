@@ -23,4 +23,5 @@
     PHP_METHOD(Collection, avg);
     PHP_METHOD(Collection, count);
     PHP_METHOD(Collection, map);
+    PHP_METHOD(Collection, reduce);
 #endif
